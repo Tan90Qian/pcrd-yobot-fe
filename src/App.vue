@@ -1,5 +1,7 @@
 <template>
   <div id="app">
+    <el-input v-model="apiurl" placeholder="请输入api地址"></el-input>
+    <el-button type="primary" @click="reload">开始分析</el-button>
     <Header />
     <section class="container">
       <aside class="side-menu">
@@ -43,35 +45,33 @@ export default {
   data() {
     return {
       activeMenu: "total",
+      apiurl: null,
       originData: [],
       originUserData: [],
     };
   },
   mounted() {
-    axios
-      .all([
-        axios.get("./api/"),
-        axios.post("../api/", {
-          action: "get_member_list",
-          csrf_token: window.csrf_token,
-        }),
-      ])
+    var anchor = window.location.hash;
+    if(!anchor){
+      return;
+    }
+    this.apiurl = decodeURIComponent(anchor.substr(1));
+    this.reload();
+  },
+  methods: {
+    reload(){
+    axios.get(this.apiurl)
       .then(
-        axios.spread((resData, resUser) => {
+        resData => {
           if (resData.data.code != 0) {
             this.$alert(resData.data.message, "获取记录失败");
             return;
           }
-          if (resUser.data.code != 0) {
-            this.$alert(resUser.data.message, "获取成员失败");
-            return;
-          }
           this.originData = resData.data.challenges;
-          this.originUserData = resUser.data.members;
-        })
+          this.originUserData = resData.data.members;
+        }
       );
-  },
-  methods: {
+    },
     handleChangeActiveTab(key) {
       this.activeMenu = key;
     },
